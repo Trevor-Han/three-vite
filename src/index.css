@@ -1,0 +1,26 @@
+:root {
+  color-scheme: light dark;
+  background-color: #fafafa;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+:root[data-theme=light]{
+  background-color: #fafafa;
+  color: rgba(0, 0, 0, 0.65);
+}
+:root[data-theme=dark]{
+  color: #fafafa;
+  background-color: #000000;
+}
+
+html,body{
+  width: 100%;
+  height: auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #fafafa;
+    background-color: #000000;
+  }
+}

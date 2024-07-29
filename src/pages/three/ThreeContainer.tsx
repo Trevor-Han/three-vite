@@ -1,0 +1,59 @@
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import './ThreeContainer.css'
+import { ACESFilmicToneMapping, SRGBColorSpace } from 'three'
+import Loader from '@/utils/Loader.ts'
+import configResources from '@/config/resources.ts'
+import Loading from '@/components/Loading'
+import { useRef, useEffect, useState } from 'react'
+import { gsap } from 'gsap'
+import Experience from './Experience.tsx'
+
+const loader = new Loader()
+loader.load(configResources)
+
+function ThreeContainer() {
+  const loadingRef = useRef<HTMLDivElement>(null)
+  const [model, setModel] = useState<object | undefined>(undefined)
+
+  useEffect(() => {
+    loader.onFileLoaded(() => {
+      const value = loader.totalSuccess / loader.total * 100
+      const text = `加载场景模型: ${parseInt(value.toString())} %`
+      const percent = loadingRef.current && loadingRef.current.querySelector('.progress')
+      if (percent instanceof HTMLElement) {
+        percent.innerText = text
+      }
+    })
+    loader.onLoadEnd(resources => {
+      gsap.to('.loading-con', { opacity: 0, onComplete: () => {
+        setModel({ resources })
+        loadingRef.current && loadingRef.current.classList.add('display-none')
+      } })
+    })
+  }, [])
+
+  return <div className='ThreeContainer'>
+    <Loading ref={loadingRef}/>
+    <Canvas
+      shadows
+      dpr={[1, 2]}
+      gl={{
+        antialias: true,
+        toneMapping: ACESFilmicToneMapping,
+        outputColorSpace: SRGBColorSpace
+      }}
+      camera={{
+        fov: 75,
+        near: 0.1,
+        far: 500,
+        position: [-0.1072, 0.5, -3.4973]
+      }}
+    >
+      { model !== undefined && <Experience model={model}/>}
+      <OrbitControls makeDefault/>
+    </Canvas>
+  </div>
+}
+
+export default ThreeContainer

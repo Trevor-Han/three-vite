@@ -1,0 +1,43 @@
+.not-found-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+}
+
+.not-found-title {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    /* 添加你的标题样式 */
+}
+
+.not-found-message {
+    font-size: 2rem;
+    /* 添加你的消息样式 */
+}
+
+.not-found-animation {
+    margin-top: 2rem;
+    /* 添加你的动画容器样式 */
+}
+
+.animation-element {
+    /* 使用CSS动画或过渡 */
+    font-size: 3rem;
+    animation: floatUp 2s ease-in-out infinite;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
