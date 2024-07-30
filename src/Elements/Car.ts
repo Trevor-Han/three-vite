@@ -25,18 +25,10 @@ export default class Car {
   model: any
   groundLoader: any
   uniforms: UniformType
-  nameToMeshDic: nameType | undefined
-  wheel: nameType | undefined
   constructor(model:any = null) {
     this.model = model
-    this.wheel = {
-      wheel_back_right: null,
-      wheel_back_left: null,
-      wheel_front_right: null,
-      wheel_front_left: null
-    }
     this.uniforms = {
-      uColor: { value: new Color('#000') },
+      uColor: { value: new Color('#ffffff') },
       uReflectMatrix: { value: new Matrix4() },
       uReflectTexture: { value: new Texture() },
       uReflectIntensity: { value: 15 },
@@ -49,22 +41,22 @@ export default class Car {
   build(gltf:any) {
     this.model = gltf
     this.model.scene.traverse((child:any) => {
-      if (['topLigt', 'radar', 'empennage'].includes(child.name)) {
-        if (this.nameToMeshDic !== undefined) {
-          this.nameToMeshDic[child.name] = child
-        }
-      }
-      if (['wheel_back_right', 'wheel_back_left', 'wheel_front_right', 'wheel_front_left'].includes(child.name)) {
-        if (this.wheel !== undefined) {
-          this.wheel[child.name] = child
-        }
-      }
-      if (child.name === 'Object_18') {
-        if (this.nameToMeshDic !== undefined) {
-          this.nameToMeshDic['MeshColor'] = child
-        }
-      }
-      if (child.name === '平面') {
+      // if (['topLigt', 'radar', 'empennage'].includes(child.name)) {
+      //   if (this.nameToMeshDic !== undefined) {
+      //     this.nameToMeshDic[child.name] = child
+      //   }
+      // }
+      // if (['wheel_back_right', 'wheel_back_left', 'wheel_front_right', 'wheel_front_left'].includes(child.name)) {
+      //   if (this.wheel !== undefined) {
+      //     this.wheel[child.name] = child
+      //   }
+      // }
+      // if (child.name === 'Object_18') {
+      //   if (this.nameToMeshDic !== undefined) {
+      //     this.nameToMeshDic['MeshColor'] = child
+      //   }
+      // }
+      if (child.name === 'ReflecFloor') {
         // child.material.normalMap.flipY = false
         // child.material.normalMap.colorSpace = LinearSRGBColorSpace
         // child.material.normalMap.wrapS = RepeatWrapping

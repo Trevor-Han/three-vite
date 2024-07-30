@@ -1,11 +1,11 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import './ThreeContainer.css'
-import { ACESFilmicToneMapping, SRGBColorSpace } from 'three'
+import { CineonToneMapping, SRGBColorSpace } from 'three'
 import Loader from '@/utils/Loader.ts'
 import configResources from '@/config/resources.ts'
 import Loading from '@/components/Loading'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, Suspense } from 'react'
 import { gsap } from 'gsap'
 import Experience from './Experience.tsx'
 
@@ -40,8 +40,7 @@ function ThreeContainer() {
       dpr={[1, 2]}
       gl={{
         antialias: true,
-        toneMapping: ACESFilmicToneMapping,
-        outputColorSpace: SRGBColorSpace
+        toneMapping: CineonToneMapping
       }}
       camera={{
         fov: 75,
@@ -50,7 +49,10 @@ function ThreeContainer() {
         position: [-0.1072, 0.5, -3.4973]
       }}
     >
-      { model !== undefined && <Experience model={model}/>}
+      <Suspense fallback={null}>
+        { model !== undefined && <Experience model={model}/>}
+      </Suspense>
+
       <OrbitControls makeDefault/>
     </Canvas>
   </div>
