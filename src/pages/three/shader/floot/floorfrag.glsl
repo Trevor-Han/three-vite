@@ -1,5 +1,4 @@
 #include "/node_modules/lygia/lighting/fresnel.glsl"
-//#include "../includes/packedTexture2DLOD.glsl"
 #include "/node_modules/lygia/sample/bicubic.glsl"
 #include "/node_modules/furina/sample/packedTexture2DLOD.glsl"
 varying vec2 vUv;
