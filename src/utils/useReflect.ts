@@ -51,7 +51,9 @@ const useReflect = (parent: Mesh, config: Partial<MeshReflectorMaterialConfig> =
     const p = new Vector3()
     reflectPlane.projectPoint(o, p)
     const y = p.clone()
-    y.sub(o), y.add(p), camera.position.copy(y)
+    y.sub(o)
+    y.add(p)
+    camera.position.copy(y)
     const d = new Vector3(0, 0, -1)
     d.applyQuaternion(
       baseCamera.getWorldQuaternion(new Quaternion())

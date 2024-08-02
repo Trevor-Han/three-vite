@@ -4,7 +4,7 @@
 #include "/node_modules/lygia/math/map.glsl"
 #include "/node_modules/lygia/color/palette.glsl"
 
-uniform float iTime;
+uniform float uTime;
 uniform vec3 iResolution;
 uniform vec4 iMouse;
 
@@ -50,7 +50,7 @@ void main(){
     vec3 col=vec3(1.0);
     float mask = 1.0;
 
-    noiseUv.x += -iTime *.1; // 位置偏移
+    noiseUv.x += -uTime *.1; // 位置偏移
     // float noiseValue=noise(noiseUv*vec2(100.)); // 应用噪声
     float noiseValue = noise( noiseUv * vec2(3.0,100.0)); // 线条拉长
     mask = noiseValue;
@@ -65,8 +65,9 @@ void main(){
     col*=vec3(1.5,1.,400.);
     // mask=1.;
 
-    mask *= smoothstep(.02,0.6,uv.x) * smoothstep(.02,0.6,1.-uv.x); // 虚化线条两边的颜色
-    // mask*=smoothstep(1.,10.,uSpeed);
+    mask *= smoothstep(.02,0.5,uv.x) * smoothstep(.02,0.5,1.-uv.x); // 虚化线条两边的颜色
+    mask*=smoothstep(.01,.1,uv.y)*smoothstep(.01,.1,1.-uv.y);
+//    mask*=smoothstep(1.,10.,uSpeed);
 
     gl_FragColor=vec4(col,mask*uOpacity);
 }

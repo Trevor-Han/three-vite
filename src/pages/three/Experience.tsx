@@ -1,175 +1,167 @@
-import World from '@/Elements/World.ts'
-const world = new World()
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
-import {
-  UnsignedByteType,
-  NearestFilter,
-  LinearFilter,
-  Mesh,
-  MeshStandardMaterial,
-  TextureLoader,
-  LinearSRGBColorSpace, RepeatWrapping, SRGBColorSpace
-} from 'three'
-import { useCubeCamera, useTexture } from '@react-three/drei'
+import { UnsignedByteType, NearestFilter, LinearFilter, Mesh, MeshStandardMaterial, ShaderMaterial, Color } from 'three'
+import { useCubeCamera } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useRef } from 'react'
 import { useReflect } from '@/utils/useReflect'
+import { useControls } from 'Leva'
+import { flatModel, printModel } from '@/utils/misc.ts'
+import { useGSAP } from '@gsap/react'
+import { useGameStore } from '@/utils/Store.ts'
 import * as THREE from 'three'
-import {useControls} from 'Leva'
-import {flatModel, printModel} from '@/utils/misc.ts'
-import CustomShaderMaterial from 'three-custom-shader-material/vanilla'
-import floorVertex from '@/pages/three/shader/floot/floorver.glsl'
-import floorFrag from '@/pages/three/shader/floot/floorfrag.glsl'
+import gsap from 'gsap'
 
-interface propType{
-  model?: any
-}
-
-function Experience(props:propType) {
-  const floornormalMap = new TextureLoader().load('images/t_floor_normal.webp')
-  const floorroughnessMap = new TextureLoader().load('images/t_floor_roughness.webp')
-  const lightMap = new TextureLoader().load('images/t_startroom_light.raw.jpg');
-  const startRoomAoMap = new TextureLoader().load('images/t_startroom_ao.raw.jpg');
-
-  floorroughnessMap.colorSpace = LinearSRGBColorSpace;
-  floorroughnessMap.wrapS = floorroughnessMap.wrapT = RepeatWrapping;
-  floornormalMap.colorSpace = LinearSRGBColorSpace;
-  floornormalMap.wrapS = floornormalMap.wrapT = RepeatWrapping;
-  startRoomAoMap.channel = 1;
-  startRoomAoMap.flipY = false;
-  startRoomAoMap.colorSpace = LinearSRGBColorSpace;
-  lightMap.channel = 1;
-  lightMap.flipY = false;
-  lightMap.colorSpace = SRGBColorSpace;
-
-
+function Experience(prop:any) {
   const modelRef = useRef({
     wheel: [] as Mesh[],
     bodyMat: null as MeshStandardMaterial | null,
     floor: null as Mesh | null,
     lightMat: null as MeshStandardMaterial | null
   })
-  const { carLoad, envLight, tunnelLoader } = world.build(props.model)
-  // tunnelLoader.scene.visible = false
+  const { carLoad, tunnelLoader, startRoom } = prop.model[0]
+  tunnelLoader.scene.visible = false
+
   const carModel = flatModel(carLoad)
+  const roomModel = flatModel(startRoom)
+  const tunnelModel = flatModel(tunnelLoader)
+
+  // printModel(tunnelModel)
+
+  const floor = roomModel[2] as Mesh
+  const body = carModel[46] as Mesh
+  const tunnel = tunnelModel[1] as Mesh
+  const light = roomModel[1] as Mesh
+  const floorMaterial = floor.material as ShaderMaterial
+  const tunnelMaterial = tunnel.material as ShaderMaterial
+  const floorUniforms = floorMaterial.uniforms
+  const tunnelUniforms = tunnelMaterial.uniforms
+  const bodyMat = body.material as THREE.MeshStandardMaterial
 
   const { fbo, camera } = useCubeCamera({ resolution: 1024 })
   const scene = useThree((state) => state.scene)
+  const bodyColor = useGameStore((state) => state.bodyColor)
+  const preColor = useGameStore((state) => state.preColor)
+
+  bodyMat.color = new Color(preColor)
+  modelRef.current.bodyMat = body.material as THREE.MeshStandardMaterial
+  modelRef.current.floor = floor
+  modelRef.current.lightMat = light.material as MeshStandardMaterial
+
+  const par = {
+    color: modelRef.current.bodyMat!.color,
+    targetColor: new Color(bodyColor)
+  }
+
+  useGSAP(() => {
+    gsap.to(par.color, {
+      duration: 1,
+      ease: 'power1.out',
+      r: par.targetColor.r,
+      g: par.targetColor.g,
+      b: par.targetColor.b,
+      onUpdate: () => {
+        modelRef.current.bodyMat?.color.set(par.color)
+      },
+      onComplete: () => {
+        useGameStore.setState({ preColor: par.color })
+      }
+    })
+  },
+  { dependencies: [bodyColor] }
+  )
 
   fbo.texture.type = UnsignedByteType
   fbo.texture.generateMipmaps = false
   fbo.texture.minFilter = NearestFilter
   fbo.texture.magFilter = NearestFilter
 
-  const { matrix, renderTarget } = useReflect(modelRef.current.floor!, {
+  const { matrix, renderTarget } = useReflect(floor, {
     resolution: [innerWidth, innerHeight],
-    ignoreObjects: [modelRef.current.floor!, carLoad.scene]
+    ignoreObjects: [floor, tunnelLoader.scene, startRoom.scene]
   })
 
-  printModel(carModel)
-
-  useControls("mimapLevel", {
+  useControls('mimapLevel', {
     level: {
       min: 0,
       max: 10,
       value: 2.5,
       onChange: (value) => {
-        world.car.uniforms!.uLevel.value = value
-      },
+        floorUniforms!.uLevel.value = value
+      }
+    },
+    tunnelSpeed: {
+      value: 1,
+      min: 0,
+      max: 10,
+      onChange: (value) => {
+        tunnelUniforms.uTime.value = value
+      }
     },
     lightOpacity: {
       value: 1,
       min: 0,
       max: 1,
       onChange: (value) => {
-        modelRef.current.lightMat!.opacity = value;
-      },
-    },
-  });
+        modelRef.current.lightMat!.opacity = value
+      }
+    }
+  })
 
   useLayoutEffect(() => {
     handleModel()
-    world.car.uniforms.uResolution.value.set(
-        renderTarget.width,
-        renderTarget.height
-    );
+    floorUniforms.uResolution.value.set(
+      renderTarget.width,
+      renderTarget.height
+    )
     scene.environment = fbo.texture
-    // scene.environment = envLight
   }, [])
 
-  const handleModel = () =>{
-    const floor = carModel[1] as Mesh
-    const body = carModel[51] as Mesh;
-    const bodyMat = body.material as THREE.MeshStandardMaterial;
-    bodyMat.color = new THREE.Color("#26d6e9");
-    bodyMat.envMapIntensity = 2;
+  const handleModel = () => {
+    const wheel = carModel[35] as THREE.Mesh
+    wheel.children.forEach((child) => {
+      const mesh = child as Mesh
+      const mat = mesh.material as THREE.MeshStandardMaterial
+      mat.envMapIntensity = 5
+      modelRef.current.wheel.push(mesh)
+    })
 
-    const light = carModel[2] as Mesh
-    const lightMat = light.material as THREE.MeshPhysicalMaterial;
-    lightMat.emissive = new THREE.Color("white");
-    lightMat.toneMapped = false;
-    lightMat.transparent = true;
     light.material = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       side: THREE.DoubleSide,
       transparent: true,
-      alphaTest: 0.01,
-    });
-
-    bodyMat.color = new THREE.Color("#26d6e9");
-    const floorMat = floor.material as THREE.MeshPhysicalMaterial;
-    floorMat.roughnessMap = floorroughnessMap;
-    floorMat.normalMap = floornormalMap;
-    // floorMat.aoMap = startRoomAoMap;
-    // floorMat.lightMap = floorroughnessMap;
-    floorMat.envMapIntensity = 0.5;
-
-    const floorCsmMat = new CustomShaderMaterial({
-      baseMaterial: floorMat,
-      uniforms: world.car.uniforms,
-      vertexShader: floorVertex,
-      fragmentShader: floorFrag,
-      silent: true
+      alphaTest: 0.01
     })
-
-    world.car.update('ReflecFloor', floorCsmMat)
-    world.car.update('topLigt', light.material)
-    world.car.uniforms.uReflectTexture.value = renderTarget.texture
+    floorUniforms.uReflectTexture.value = renderTarget.texture
     renderTarget.texture.minFilter = LinearFilter
     renderTarget.texture.magFilter = LinearFilter
-    world.car.uniforms.uReflectMatrix.value = matrix
-
-    modelRef.current.bodyMat = bodyMat;
-    modelRef.current.floor = floor
-    modelRef.current.lightMat = light.material as MeshStandardMaterial;
-
+    floorUniforms.uReflectMatrix.value = matrix
   }
 
-  useFrame((state, delta) => {
-    if (world.car.uniforms) {
-      world.car.uniforms.uTime.value += delta * 20;
-    }
-    carLoad.scene.visible = false;
-    camera.update(state.gl, scene);
-    carLoad.scene.visible = true;
-
+  useFrame((state) => {
+    // tunnelUniforms.uTime.value += delta * 8;
+    // RectAreaLightUniformsLib.init();
+    carLoad.scene.visible = false
+    camera.update(state.gl, scene)
+    carLoad.scene.visible = true
   })
 
   return <>
     <primitive object={carLoad?.scene}></primitive>
+    <primitive object={startRoom?.scene}></primitive>
     <primitive object={tunnelLoader?.scene}></primitive>
     <EffectComposer
-        frameBufferType={UnsignedByteType}
+      frameBufferType={UnsignedByteType}
       multisampling={2}
       enabled={false}
     >
       <Bloom
-        luminanceThreshold={0.1}
+        intensity={1}
+        luminanceThreshold={2}
         blendFunction={BlendFunction.ADD}
         mipmapBlur
-        radius={0.2}
-        opacity={0.7}
+        radius={0.5}
+        opacity={1}
       ></Bloom>
     </EffectComposer>
   </>

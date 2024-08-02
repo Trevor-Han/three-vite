@@ -2,10 +2,12 @@ import { TextureLoader } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 
 export enum LoaderType {
     'Texture' = 'Texture',
     'GLTF' = 'GLTF',
+    'GLB' = 'glb',
     'RGBE' = 'RGBE'
 }
 
@@ -25,6 +27,7 @@ export default class Loader {
   private loadEnd: (resources: {[key: string]: any}) => void
 
   private gltfLoader: GLTFLoader
+  private glbLoader: GLTFLoader
   private rgbeLoader: RGBELoader
   private textureLoader: TextureLoader
 
@@ -41,12 +44,16 @@ export default class Loader {
     // GLTF loader
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('libs/draco/')
-    const gltfLoader = new GLTFLoader()
-    gltfLoader.setDRACOLoader(dracoLoader)
-    this.gltfLoader = gltfLoader
+    const glbLoader = new GLTFLoader()
+    glbLoader.setDRACOLoader(dracoLoader)
 
+    this.glbLoader = glbLoader
     this.rgbeLoader = new RGBELoader()
     this.textureLoader = new TextureLoader()
+
+    const gltfLoader = new GLTFLoader()
+    gltfLoader.setMeshoptDecoder(MeshoptDecoder)
+    this.gltfLoader = gltfLoader
   }
 
   // Load files
@@ -79,6 +86,9 @@ export default class Loader {
     switch (type) {
       case LoaderType.GLTF:
         loader = this.gltfLoader
+        break
+      case LoaderType.GLB:
+        loader = this.glbLoader
         break
       case LoaderType.Texture:
         loader = this.textureLoader

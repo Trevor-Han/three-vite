@@ -1,98 +1,30 @@
-import * as THREE from 'three'
-import {
-  Color,
-  Matrix4,
-  Vector2,
-  Texture,
-  IUniform,
-  SRGBColorSpace,
-  TextureLoader,
-  LinearSRGBColorSpace,
-  RepeatWrapping,
-  NearestFilter,
-  MeshPhysicalMaterial, Material
-} from 'three'
-import CustomShaderMaterial from "three-custom-shader-material/vanilla";
-import floorVertex from "@/pages/three/shader/floot/floorver.glsl";
-import floorFrag from "@/pages/three/shader/floot/floorfrag.glsl";
-interface nameType {
-    [propName:string]: any
-}
-interface UniformType{
-  [key: string]: IUniform
-}
+import { Color, Material, TextureLoader, LinearSRGBColorSpace, NearestFilter } from 'three'
+
 export default class Car {
   model: any
-  groundLoader: any
-  uniforms: UniformType
   constructor(model:any = null) {
     this.model = model
-    this.uniforms = {
-      uColor: { value: new Color('#ffffff') },
-      uReflectMatrix: { value: new Matrix4() },
-      uReflectTexture: { value: new Texture() },
-      uReflectIntensity: { value: 15 },
-      uIntensity: { value: 0 },
-      uLevel: { value: 0 },
-      uResolution: { value: new Vector2() },
-      uTime: { value: 0 }
-    }
   }
   build(gltf:any) {
     this.model = gltf
     this.model.scene.traverse((child:any) => {
-      // if (['topLigt', 'radar', 'empennage'].includes(child.name)) {
-      //   if (this.nameToMeshDic !== undefined) {
-      //     this.nameToMeshDic[child.name] = child
-      //   }
-      // }
-      // if (['wheel_back_right', 'wheel_back_left', 'wheel_front_right', 'wheel_front_left'].includes(child.name)) {
-      //   if (this.wheel !== undefined) {
-      //     this.wheel[child.name] = child
-      //   }
-      // }
-      // if (child.name === 'Object_18') {
-      //   if (this.nameToMeshDic !== undefined) {
-      //     this.nameToMeshDic['MeshColor'] = child
-      //   }
-      // }
-      if (child.name === 'ReflecFloor') {
-        // child.material.normalMap.flipY = false
-        // child.material.normalMap.colorSpace = LinearSRGBColorSpace
-        // child.material.normalMap.wrapS = RepeatWrapping
-        // child.material.normalMap.wrapT = RepeatWrapping
-        //
-        // child.material.roughnessMap.flipY = false
-        // child.material.roughnessMap.colorSpace = LinearSRGBColorSpace
-        // child.material.roughnessMap.wrapS = RepeatWrapping
-        // child.material.roughnessMap.wrapT = RepeatWrapping
-        //
-        // child.material.aoMap.flipY = false;
-        // child.material.aoMap.colorSpace = LinearSRGBColorSpace;
-        // child.material.aoMap.minFilter = NearestFilter;
-        // child.material.aoMap.magFilter = NearestFilter;
-        // child.material.aoMap.channel = 1;
-        //
-        // child.material.lightMap.channel = 1;
-        // child.material.lightMap.flipY = false;
-        // child.material.lightMap.colorSpace = SRGBColorSpace;
-        // child.material.envMapIntensity = 0.5;
-
-
-        this.groundLoader = child
+      if (child.name === 'body') {
+        child.color = new Color('#26d6e9')
+        child.material.envMapIntensity = 5
       }
       if (child.type === 'Mesh') {
-        child.castShadow = true
-        child.receiveShadow = true
+        child.material.envMapIntensity = 5
+        // const aoMap = new TextureLoader().load("/textures/t_car_body_AO.raw.jpg");
+        // aoMap.flipY = false;
+        // aoMap.colorSpace = LinearSRGBColorSpace;
+        // aoMap.minFilter = NearestFilter;
+        // aoMap.magFilter = NearestFilter;
+        // aoMap.channel = 1;
+        // child.material.aoMap = aoMap
+        // child.castShadow = true
+        // child.receiveShadow = true
       }
     })
     return this.model
-  }
-  update(name:string, gltf: Material){
-    this.model.scene.traverse((child:any)=>{
-      if (child.name === name){
-        child.material = gltf
-      }
-    })
   }
 }

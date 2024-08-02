@@ -1,14 +1,17 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import './ThreeContainer.css'
-import { CineonToneMapping, SRGBColorSpace } from 'three'
-import Loader from '@/utils/Loader.ts'
-import configResources from '@/config/resources.ts'
-import Loading from '@/components/Loading'
+import { CineonToneMapping } from 'three'
 import { useRef, useEffect, useState, Suspense } from 'react'
 import { gsap } from 'gsap'
+import configResources from '@/config/resources.ts'
+import Loading from '@/components/Loading'
 import Experience from './Experience.tsx'
+import UIContainer from '@/components/UI/UIContainer.tsx'
+import './ThreeContainer.css'
+import World from '@/Elements/World.ts'
+import Loader from '@/utils/Loader.ts'
 
+const world = new World()
 const loader = new Loader()
 loader.load(configResources)
 
@@ -27,7 +30,8 @@ function ThreeContainer() {
     })
     loader.onLoadEnd(resources => {
       gsap.to('.loading-con', { opacity: 0, onComplete: () => {
-        setModel({ resources })
+        world.build(resources)
+        setModel([world.model])
         loadingRef.current && loadingRef.current.classList.add('display-none')
       } })
     })
@@ -35,8 +39,9 @@ function ThreeContainer() {
 
   return <div className='ThreeContainer'>
     <Loading ref={loadingRef}/>
+    <UIContainer/>
     <Canvas
-      shadows
+      frameloop={!model ? 'never' : 'always'}
       dpr={[1, 2]}
       gl={{
         antialias: true,

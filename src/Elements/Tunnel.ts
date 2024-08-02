@@ -19,21 +19,13 @@ export default class Tunnel {
           vertexShader: vertexShader,
           fragmentShader: fragmentShader,
           uniforms: {
-            uOpacity: { value: 1.0 },
-            uSpeed: { value: 1.0 },
-            iTime: { value: 0.0 }
+            uOpacity: { value: 0.0 },
+            uSpeed: { value: 0.0 },
+            uTime: { value: 0.0 }
           }
         })
       }
     })
     return this.model
-  }
-  MeshChildren() {
-    const tunnelMeshDic:nameType = { 'a': '11' }
-    const gltf = this.build(this.model)
-    gltf.scene.traverse((child:any) => {
-      tunnelMeshDic['tunnel'] = child
-    })
-    return [tunnelMeshDic]
   }
 }
