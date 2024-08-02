@@ -1,47 +1,35 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 import { CineonToneMapping } from 'three'
-import { useRef, useEffect, useState, Suspense } from 'react'
-import { gsap } from 'gsap'
-import configResources from '@/config/resources.ts'
-import Loading from '@/components/Loading'
+import { Suspense, useState } from 'react'
 import Experience from './Experience.tsx'
 import UIContainer from '@/components/UI/UIContainer.tsx'
 import './ThreeContainer.css'
+import { useInteractStore } from '@/utils/Store.ts'
 import World from '@/Elements/World.ts'
 import Loader from '@/utils/Loader.ts'
+import configResources from '@/config/resources.ts'
 
 const world = new World()
 const loader = new Loader()
 loader.load(configResources)
-
 function ThreeContainer() {
-  const loadingRef = useRef<HTMLDivElement>(null)
+  const demand = useInteractStore((state) => state.demand)
+  const progressDom = useInteractStore((state) => state.progressDom)
   const [model, setModel] = useState<object | undefined>(undefined)
 
-  useEffect(() => {
-    loader.onFileLoaded(() => {
-      const value = loader.totalSuccess / loader.total * 100
-      const text = `加载场景模型: ${parseInt(value.toString())} %`
-      const percent = loadingRef.current && loadingRef.current.querySelector('.progress')
-      if (percent instanceof HTMLElement) {
-        percent.innerText = text
-      }
-    })
-    loader.onLoadEnd(resources => {
-      gsap.to('.loading-con', { opacity: 0, onComplete: () => {
-        world.build(resources)
-        setModel([world.model])
-        loadingRef.current && loadingRef.current.classList.add('display-none')
-      } })
-    })
-  }, [])
+  loader.onFileLoaded(() => {
+    const value = loader.totalSuccess / loader.total * 100
+    progressDom!.textContent = `加载场景模型: ${parseInt(value.toString())} %`
+  })
+  loader.onLoadEnd(resources => {
+    world.build(resources)
+    setModel([world.model])
+  })
 
   return <div className='ThreeContainer'>
-    <Loading ref={loadingRef}/>
     <UIContainer/>
     <Canvas
-      frameloop={!model ? 'never' : 'always'}
+      frameloop={demand ? 'never' : 'always'}
       dpr={[1, 2]}
       gl={{
         antialias: true,
@@ -55,10 +43,8 @@ function ThreeContainer() {
       }}
     >
       <Suspense fallback={null}>
-        { model !== undefined && <Experience model={model}/>}
+        {model !== undefined && <Experience model={model}/>}
       </Suspense>
-
-      <OrbitControls makeDefault/>
     </Canvas>
   </div>
 }

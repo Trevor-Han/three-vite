@@ -1,16 +1,52 @@
 import './loading.css'
-import { forwardRef } from 'react'
+import { FC, memo, useEffect, useLayoutEffect, useRef } from 'react'
+import { useInteractStore, useLoadedStore } from '@/utils/Store.ts'
+import gsap from 'gsap'
+import { useGSAP } from '@gsap/react'
+import { PageActionType } from '@/store/festures/game.ts'
 
-const Loading = forwardRef<HTMLDivElement>((_props, ref) => {
+interface IProps {
+  emit: (type: PageActionType, payload?: any) => void;
+}
+
+const Loading: FC<IProps> = memo(({ emit }) => {
+  const progress = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  const { contextSafe } = useGSAP()
+
+  const ready = useLoadedStore((state) => state.ready)
+
+  useLayoutEffect(() => {
+    useInteractStore.setState({ progressDom: progress.current! })
+  }, [])
+
+  useEffect(() => {
+    ready && close()
+  }, [ready])
+
+  const close = contextSafe(() => {
+    useInteractStore.setState({ demand: false })
+    gsap.to(panelRef.current, {
+      opacity: 0,
+      duration: 0.35,
+      delay: 1,
+      ease: 'none',
+      onComplete: () => {
+        emit('hide-load')
+        emit('show-game')
+        panelRef.current!.classList.add('display-none')
+      }
+    })
+  })
   return (
-    <div className='loading-con' ref={ref}>
+    <div className='loading-con' ref={panelRef}>
       <div className='loading'>
         <div className='loading-circle'></div>
-        <div className='progress'></div>
+        <div className='progress' ref={progress}></div>
       </div>
       <div className='loading-complete display-none'>
-        <p>
-                    加载完成
+        <p>加载完成
           <svg className='icon' viewBox='0 0 1024 1024' version='1.1'
             xmlns='http://www.w3.org/2000/svg' width='24' height='24'>
             <path

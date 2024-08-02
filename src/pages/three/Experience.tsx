@@ -1,14 +1,14 @@
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import { UnsignedByteType, NearestFilter, LinearFilter, Mesh, MeshStandardMaterial, ShaderMaterial, Color } from 'three'
-import { useCubeCamera } from '@react-three/drei'
+import { OrbitControls, useCubeCamera } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useReflect } from '@/utils/useReflect'
 import { useControls } from 'Leva'
 import { flatModel, printModel } from '@/utils/misc.ts'
 import { useGSAP } from '@gsap/react'
-import { useGameStore } from '@/utils/Store.ts'
+import { useGameStore, useInteractStore, useLoadedStore } from '@/utils/Store.ts'
 import * as THREE from 'three'
 import gsap from 'gsap'
 
@@ -19,6 +19,8 @@ function Experience(prop:any) {
     floor: null as Mesh | null,
     lightMat: null as MeshStandardMaterial | null
   })
+  const controlDom = useInteractStore((state) => state.controlDom)
+
   const { carLoad, tunnelLoader, startRoom } = prop.model[0]
   tunnelLoader.scene.visible = false
 
@@ -40,6 +42,7 @@ function Experience(prop:any) {
 
   const { fbo, camera } = useCubeCamera({ resolution: 1024 })
   const scene = useThree((state) => state.scene)
+  const glCamera = useThree((state) => state.camera)
   const bodyColor = useGameStore((state) => state.bodyColor)
   const preColor = useGameStore((state) => state.preColor)
 
@@ -54,7 +57,9 @@ function Experience(prop:any) {
   }
 
   useGSAP(() => {
-    gsap.to(par.color, {
+    gsap.killTweensOf(par)
+    const parT = gsap.timeline()
+    parT.to(par.color, {
       duration: 1,
       ease: 'power1.out',
       r: par.targetColor.r,
@@ -69,6 +74,18 @@ function Experience(prop:any) {
     })
   },
   { dependencies: [bodyColor] }
+  )
+  useGSAP(() => {
+    gsap.to(glCamera, {
+      fov: 60,
+      duration: 4,
+      ease: 'power2.out',
+      onUpdate: () => {
+        glCamera.updateProjectionMatrix()
+      }
+    })
+  },
+  { dependencies: [glCamera] }
   )
 
   fbo.texture.type = UnsignedByteType
@@ -117,6 +134,9 @@ function Experience(prop:any) {
     scene.environment = fbo.texture
   }, [])
 
+  useEffect(() => {
+    useLoadedStore.setState({ ready: true })
+  }, [])
   const handleModel = () => {
     const wheel = carModel[35] as THREE.Mesh
     wheel.children.forEach((child) => {
@@ -147,9 +167,11 @@ function Experience(prop:any) {
   })
 
   return <>
-    <primitive object={carLoad?.scene}></primitive>
-    <primitive object={startRoom?.scene}></primitive>
-    <primitive object={tunnelLoader?.scene}></primitive>
+    <OrbitControls domElement={controlDom}/>
+    <primitive object={carLoad?.scene}/>
+    <primitive object={startRoom?.scene}/>
+    <primitive object={tunnelLoader?.scene}/>
+
     <EffectComposer
       frameBufferType={UnsignedByteType}
       multisampling={2}
@@ -162,7 +184,7 @@ function Experience(prop:any) {
         mipmapBlur
         radius={0.5}
         opacity={1}
-      ></Bloom>
+      />
     </EffectComposer>
   </>
 }

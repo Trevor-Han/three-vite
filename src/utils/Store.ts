@@ -7,4 +7,14 @@ const useGameStore = create(() => ({
   preColor: new Color('#26d6e9'),
   bodyColor: '#26d6e9'
 }))
-export { useGameStore }
+
+const useInteractStore = create(() => ({
+  demand: true,
+  controlDom: document.createElement('div'),
+  progressDom: document.createElement('div')
+}))
+
+const useLoadedStore = create(() => ({
+  ready: false
+}))
+export { useGameStore, useInteractStore, useLoadedStore }
