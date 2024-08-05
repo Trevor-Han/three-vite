@@ -1,10 +1,11 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, PointerEventHandler } from 'react'
 import { UIWrapper } from './style'
 import UIControls from './UIControls/index.tsx'
 import { useDispatch, useSelector } from 'react-redux'
 import type { RootState } from '@/store'
 import Loading from '@/components/Loading'
 import { PageActionType, showGame, showLoad } from '@/store/festures/game.ts'
+import { useGameStore } from '@/utils/Store.ts'
 
 export default function UIContainer() {
   const { game, load } = useSelector((state:RootState) => state.game)
@@ -19,9 +20,13 @@ export default function UIContainer() {
     }
     // dispatch({ type, payload })
   }, [])
+
+  const handlePointerUp: PointerEventHandler = () => {
+    useGameStore.setState({ touch: false })
+  }
   return (
     <>
-      <UIWrapper ref={container}>
+      <UIWrapper ref={container} onPointerUp={handlePointerUp}>
         {game && <UIControls/>}
         {load && <Loading emit={handleEmit}/>}
       </UIWrapper>

@@ -1,6 +1,6 @@
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
-import { UnsignedByteType, NearestFilter, LinearFilter, Mesh, MeshStandardMaterial, ShaderMaterial, Color } from 'three'
+import { UnsignedByteType, NearestFilter, LinearFilter, Mesh, MeshStandardMaterial, ShaderMaterial, Color, MeshPhysicalMaterial } from 'three'
 import { OrbitControls, useCubeCamera } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useRef } from 'react'
@@ -8,7 +8,8 @@ import { useReflect } from '@/utils/useReflect'
 import { useControls } from 'Leva'
 import { flatModel, printModel } from '@/utils/misc.ts'
 import { useGSAP } from '@gsap/react'
-import { useGameStore, useInteractStore, useLoadedStore } from '@/utils/Store.ts'
+import { glPositionKeyType, useGameStore, useInteractStore, useLoadedStore } from '@/utils/Store.ts'
+import UseTabsTarget from '@/utils/useTabsTarget.ts'
 import * as THREE from 'three'
 import gsap from 'gsap'
 
@@ -19,10 +20,22 @@ function Experience(prop:any) {
     floor: null as Mesh | null,
     lightMat: null as MeshStandardMaterial | null
   })
+  const params = useRef({
+    speedFactor: 0,
+    initColor: new Color('#fff'),
+    speedupColor: new Color('#000'),
+    floorColor: new Color('#fff'),
+    floorNormalSpeed: 0,
+    bloomIntensity: 1,
+    bloomThreshold: 0.9,
+    lightOpacity: 1,
+    floorEnvIntensity: 0,
+    wheelRoughness: 1,
+    wheelEnvIntensity: 5
+  })
   const controlDom = useInteractStore((state) => state.controlDom)
 
   const { carLoad, tunnelLoader, startRoom } = prop.model[0]
-  tunnelLoader.scene.visible = false
 
   const carModel = flatModel(carLoad)
   const roomModel = flatModel(startRoom)
@@ -45,11 +58,15 @@ function Experience(prop:any) {
   const glCamera = useThree((state) => state.camera)
   const bodyColor = useGameStore((state) => state.bodyColor)
   const preColor = useGameStore((state) => state.preColor)
+  const tabs:glPositionKeyType | undefined = useGameStore((state) => state.tabs)
+  const touch = useGameStore((state) => state.touch)
 
   bodyMat.color = new Color(preColor)
   modelRef.current.bodyMat = body.material as THREE.MeshStandardMaterial
   modelRef.current.floor = floor
   modelRef.current.lightMat = light.material as MeshStandardMaterial
+
+  UseTabsTarget()
 
   const par = {
     color: modelRef.current.bodyMat!.color,
@@ -58,8 +75,7 @@ function Experience(prop:any) {
 
   useGSAP(() => {
     gsap.killTweensOf(par)
-    const parT = gsap.timeline()
-    parT.to(par.color, {
+    gsap.to(par.color, {
       duration: 1,
       ease: 'power1.out',
       r: par.targetColor.r,
@@ -67,6 +83,7 @@ function Experience(prop:any) {
       b: par.targetColor.b,
       onUpdate: () => {
         modelRef.current.bodyMat?.color.set(par.color)
+        useGameStore.setState({ preColor: par.color })
       },
       onComplete: () => {
         useGameStore.setState({ preColor: par.color })
@@ -75,6 +92,7 @@ function Experience(prop:any) {
   },
   { dependencies: [bodyColor] }
   )
+
   useGSAP(() => {
     gsap.to(glCamera, {
       fov: 60,
@@ -87,6 +105,110 @@ function Experience(prop:any) {
   },
   { dependencies: [glCamera] }
   )
+
+  useGSAP(() => {
+    gsap.killTweensOf(modelRef.current.lightMat)
+    if (tabs === 'radar' || tabs === 'windDrag') {
+      gsap.to(modelRef.current.lightMat, {
+        opacity: 0,
+        duration: 1
+      })
+    } else {
+      gsap.to(modelRef.current.lightMat, {
+        opacity: 1,
+        duration: 1
+      })
+    }
+  },
+  { dependencies: [tabs] }
+  )
+
+  useGSAP(() => {
+    const baseParam = params.current
+    const lightMat = modelRef.current.lightMat
+    const flooMat = modelRef.current.floor?.material as MeshPhysicalMaterial
+    gsap.killTweensOf(floorUniforms.uColor.value)
+    gsap.killTweensOf(baseParam)
+    if (touch) {
+      const t1 = gsap.timeline()
+      t1.to(floorUniforms.uColor.value, {
+        duration: 1.5,
+        ease: 'power1.in',
+        r: baseParam.speedupColor.r,
+        g: baseParam.speedupColor.g,
+        b: baseParam.speedupColor.b
+      })
+
+      t1.to(baseParam, {
+        duration: 1.5,
+        ease: 'power1.in',
+        lightOpacity: 0,
+        onUpdate: () => {
+          lightMat && (lightMat.opacity = baseParam.lightOpacity)
+        }
+      },
+      0
+      )
+      t1.to(
+        baseParam,
+        {
+          duration: 1.5,
+          ease: 'power1.in',
+          speedFactor: 1,
+          floorEnvIntensity: 0.5,
+          bloomIntensity: 2,
+          bloomThreshold: 0.1,
+          wheelRoughness: 0,
+          wheelEnvIntensity: 20,
+          floorNormalSpeed: 1,
+          onUpdate: () => {
+            tunnelUniforms.uOpacity.value = baseParam.speedFactor
+            flooMat && (flooMat.envMapIntensity = baseParam.floorEnvIntensity)
+          }
+        },
+        1
+      )
+    } else {
+      const t2 = gsap.timeline()
+      t2.to(baseParam, {
+        duration: 1.5,
+        ease: 'power1.in',
+        speedFactor: 0,
+        floorEnvIntensity: 0,
+        bloomIntensity: 1,
+        bloomThreshold: 1,
+        wheelRoughness: 1,
+        wheelEnvIntensity: 5,
+        floorNormalSpeed: 0,
+        onUpdate: () => {
+          flooMat && (flooMat.envMapIntensity = baseParam.floorEnvIntensity)
+        }
+      })
+      t2.to(floorUniforms.uColor.value, {
+        duration: 1.5,
+        ease: 'power1.in',
+        r: baseParam.initColor.r,
+        g: baseParam.initColor.g,
+        b: baseParam.initColor.b
+      },
+      '-=1'
+      )
+
+      t2.to(
+        baseParam,
+        {
+          duration: 1.5,
+          ease: 'power1.in',
+          lightOpacity: 1,
+          onUpdate: () => {
+            tunnelUniforms.uOpacity.value = baseParam.lightOpacity
+            lightMat && (lightMat.opacity = baseParam.lightOpacity)
+          }
+        },
+        '-=1'
+      )
+    }
+  }, [touch])
 
   fbo.texture.type = UnsignedByteType
   fbo.texture.generateMipmaps = false
@@ -158,8 +280,10 @@ function Experience(prop:any) {
     floorUniforms.uReflectMatrix.value = matrix
   }
 
-  useFrame((state) => {
-    // tunnelUniforms.uTime.value += delta * 8;
+  useFrame((state, delta) => {
+    if (touch) {
+      tunnelUniforms.uTime.value += delta * 8
+    }
     // RectAreaLightUniformsLib.init();
     carLoad.scene.visible = false
     camera.update(state.gl, scene)
@@ -167,7 +291,18 @@ function Experience(prop:any) {
   })
 
   return <>
-    <OrbitControls domElement={controlDom}/>
+    <OrbitControls
+      makeDefault
+      domElement={controlDom}
+      minDistance={4}
+      maxDistance={4}
+      minPolarAngle={0.1}
+      maxPolarAngle={Math.PI / 2}
+      enableZoom={false}
+      enablePan={false}
+      enableDamping
+      target={[0, 0.4, 0]}
+    />
     <primitive object={carLoad?.scene}/>
     <primitive object={startRoom?.scene}/>
     <primitive object={tunnelLoader?.scene}/>
@@ -175,15 +310,15 @@ function Experience(prop:any) {
     <EffectComposer
       frameBufferType={UnsignedByteType}
       multisampling={2}
-      enabled={false}
+      enabled
     >
       <Bloom
         intensity={1}
-        luminanceThreshold={2}
+        luminanceThreshold={0.1}
         blendFunction={BlendFunction.ADD}
         mipmapBlur
-        radius={0.5}
-        opacity={1}
+        radius={0.2}
+        opacity={0.7}
       />
     </EffectComposer>
   </>

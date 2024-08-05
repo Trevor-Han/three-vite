@@ -39,7 +39,7 @@ function ThreeContainer() {
         fov: 75,
         near: 0.1,
         far: 500,
-        position: [-0.1072, 0.5, -3.4973]
+        position: [-0.0908, 0.8, -3.9976]
       }}
     >
       <Suspense fallback={null}>
