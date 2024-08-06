@@ -154,7 +154,7 @@ function Experience(prop:any) {
         {
           duration: 1.5,
           ease: 'power1.in',
-          speedFactor: 1,
+          speedFactor: 10,
           floorEnvIntensity: 0.5,
           bloomIntensity: 2,
           bloomThreshold: 0.1,
@@ -162,7 +162,7 @@ function Experience(prop:any) {
           wheelEnvIntensity: 20,
           floorNormalSpeed: 1,
           onUpdate: () => {
-            tunnelUniforms.uOpacity.value = baseParam.speedFactor
+            tunnelUniforms.uSpeed.value = baseParam.speedFactor
             flooMat && (flooMat.envMapIntensity = baseParam.floorEnvIntensity)
           }
         },
@@ -181,6 +181,7 @@ function Experience(prop:any) {
         wheelEnvIntensity: 5,
         floorNormalSpeed: 0,
         onUpdate: () => {
+          tunnelUniforms.uSpeed.value = baseParam.speedFactor
           flooMat && (flooMat.envMapIntensity = baseParam.floorEnvIntensity)
         }
       })
@@ -201,7 +202,6 @@ function Experience(prop:any) {
           ease: 'power1.in',
           lightOpacity: 1,
           onUpdate: () => {
-            tunnelUniforms.uOpacity.value = baseParam.lightOpacity
             lightMat && (lightMat.opacity = baseParam.lightOpacity)
           }
         },
@@ -215,9 +215,9 @@ function Experience(prop:any) {
   fbo.texture.minFilter = NearestFilter
   fbo.texture.magFilter = NearestFilter
 
-  const { matrix, renderTarget } = useReflect(floor, {
+  const { matrix, renderTarget } = useReflect(modelRef.current.floor!, {
     resolution: [innerWidth, innerHeight],
-    ignoreObjects: [floor, tunnelLoader.scene, startRoom.scene]
+    ignoreObjects: [modelRef.current.floor!, tunnelLoader.scene, startRoom.scene]
   })
 
   useControls('mimapLevel', {
@@ -281,9 +281,9 @@ function Experience(prop:any) {
   }
 
   useFrame((state, delta) => {
-    if (touch) {
-      tunnelUniforms.uTime.value += delta * 8
-    }
+    tunnelUniforms.uTime.value += delta * 5
+    floorUniforms.uTime.value += delta * params.current.floorNormalSpeed * 20
+    // console.log(floorUniforms.uTime.value);
     // RectAreaLightUniformsLib.init();
     carLoad.scene.visible = false
     camera.update(state.gl, scene)
@@ -307,20 +307,20 @@ function Experience(prop:any) {
     <primitive object={startRoom?.scene}/>
     <primitive object={tunnelLoader?.scene}/>
 
-    <EffectComposer
-      frameBufferType={UnsignedByteType}
-      multisampling={2}
-      enabled
-    >
-      <Bloom
-        intensity={1}
-        luminanceThreshold={0.1}
-        blendFunction={BlendFunction.ADD}
-        mipmapBlur
-        radius={0.2}
-        opacity={0.7}
-      />
-    </EffectComposer>
+    {/* <EffectComposer*/}
+    {/*  frameBufferType={UnsignedByteType}*/}
+    {/*  multisampling={2}*/}
+    {/*  enabled*/}
+    {/* >*/}
+    {/*  <Bloom*/}
+    {/*    intensity={1}*/}
+    {/*    luminanceThreshold={0.1}*/}
+    {/*    blendFunction={BlendFunction.ADD}*/}
+    {/*    mipmapBlur*/}
+    {/*    radius={0.2}*/}
+    {/*    opacity={0.7}*/}
+    {/*  />*/}
+    {/* </EffectComposer>*/}
   </>
 }
 

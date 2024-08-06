@@ -67,7 +67,7 @@ void main(){
 
     mask *= smoothstep(.02,0.5,uv.x) * smoothstep(.02,0.5,1.-uv.x); // 虚化线条两边的颜色
     mask*=smoothstep(.01,.1,uv.y)*smoothstep(.01,.1,1.-uv.y);
-//    mask*=smoothstep(1.,10.,uSpeed);
+    mask*=smoothstep(1.,10.,uSpeed) * 5.;
 
-    gl_FragColor=vec4(col,mask*uOpacity);
+    gl_FragColor=vec4(col,mask);
 }

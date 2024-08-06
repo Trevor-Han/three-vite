@@ -12,6 +12,7 @@ export default function UseTabsTarget() {
   const tabs:glPositionKeyType | undefined = useGameStore(state => state.tabs)
   const glCamera = useThree((state) => state.camera)
   const glControls = useThree((state) => state.controls)
+  const touch = useGameStore(state => state.touch)
 
   useGSAP(() => {
     if (!tabs) return
@@ -21,6 +22,7 @@ export default function UseTabsTarget() {
       'windDrag': new Vector3(1.5290, 0.8, -2.5425),
       'radar': new Vector3(-1.5097, 5.2665, -0.0144)
     }
+    gsap.killTweensOf(glCamera)
     gsap.killTweensOf(glCamera.position)
     gsap.killTweensOf(glControls)
     gsap.to(glCamera.position, {
@@ -35,8 +37,8 @@ export default function UseTabsTarget() {
     if (!glControls) return
     if (tabs === 'radar') {
       gsap.to(glControls, {
-        maxDistance: 6,
-        minDistance: 6,
+        maxDistance: 7,
+        minDistance: 7,
         duration: 1,
         onUpdate: () => {
           glCamera.updateProjectionMatrix()
@@ -52,7 +54,47 @@ export default function UseTabsTarget() {
         }
       })
     }
+    if (touch) {
+      if (tabs === 'tunnel') {
+        gsap.to(glCamera, {
+          fov: 75,
+          duration: 2,
+          ease: 'power2.out'
+        })
+      } else {
+        gsap.to(glCamera, {
+          fov: 60,
+          duration: 2,
+          ease: 'power2.out'
+        })
+      }
+    }
   },
   { dependencies: [tabs] }
+  )
+  useGSAP(() => {
+    if (tabs === 'tunnel') {
+      if (touch) {
+        gsap.to(glCamera, {
+          fov: 75,
+          duration: 2,
+          ease: 'power2.out',
+          onUpdate: () => {
+            glCamera.updateProjectionMatrix()
+          }
+        })
+      } else {
+        gsap.to(glCamera, {
+          fov: 60,
+          duration: 2,
+          ease: 'power2.out',
+          onUpdate: () => {
+            glCamera.updateProjectionMatrix()
+          }
+        })
+      }
+    }
+  },
+  { dependencies: [touch] }
   )
 }

@@ -1,6 +1,7 @@
 import vertexShader from '@/pages/three/shader/tunnel/vert.glsl'
 import fragmentShader from '@/pages/three/shader/tunnel/frag.glsl'
 import { ShaderMaterial, DoubleSide } from 'three'
+import CustomShaderMaterial from 'three-custom-shader-material/vanilla'
 
 interface nameType {
   [propName:string]: any
