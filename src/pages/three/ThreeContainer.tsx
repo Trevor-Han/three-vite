@@ -1,10 +1,10 @@
 import { Canvas } from '@react-three/fiber'
 import { CineonToneMapping } from 'three'
-import { Suspense, useState } from 'react'
+import { PointerEvent, Suspense, useState } from 'react'
 import Experience from './Experience.tsx'
 import UIContainer from '@/components/UI/UIContainer.tsx'
 import './ThreeContainer.css'
-import { useInteractStore } from '@/utils/Store.ts'
+import { useGameStore, useInteractStore } from '@/utils/Store.ts'
 import World from '@/Elements/World.ts'
 import Loader from '@/utils/Loader.ts'
 import configResources from '@/config/resources.ts'
@@ -26,9 +26,18 @@ function ThreeContainer() {
     setModel([world.model])
   })
 
+  const handlePointerEvent = (e: PointerEvent, flag: boolean) => {
+    if (!(e.target instanceof HTMLCanvasElement)) {
+      return
+    }
+    useGameStore.setState({ touch: flag })
+  }
+
   return <div className='ThreeContainer'>
     <UIContainer/>
     <Canvas
+      onPointerDown={(e) => handlePointerEvent(e, true)}
+      onPointerUp={(e) => handlePointerEvent(e, false)}
       frameloop={demand ? 'never' : 'always'}
       dpr={[1, 2]}
       gl={{

@@ -1,11 +1,11 @@
 import styled from 'styled-components'
 export const UIWrapper = styled.div`
-    position: absolute;
-    width: 100vw;
-    height: 100vh;
-    top: 0;
-    left: 0;
-    z-index: 1;
+    //position: absolute;
+    //width: 100vw;
+    //height: 100vh;
+    //top: 0;
+    //left: 0;
+    //z-index: 1;
     .clickBtn {
         position: absolute;
         left: 50%;

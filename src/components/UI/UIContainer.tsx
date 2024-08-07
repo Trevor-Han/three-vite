@@ -21,12 +21,9 @@ export default function UIContainer() {
     // dispatch({ type, payload })
   }, [])
 
-  const handlePointerUp: PointerEventHandler = () => {
-    useGameStore.setState({ touch: false })
-  }
   return (
     <>
-      <UIWrapper ref={container} onPointerUp={handlePointerUp}>
+      <UIWrapper ref={container}>
         {game && <UIControls/>}
         {load && <Loading emit={handleEmit}/>}
       </UIWrapper>

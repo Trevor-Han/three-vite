@@ -22,7 +22,6 @@ export default function UseTabsTarget() {
       'windDrag': new Vector3(1.5290, 0.8, -2.5425),
       'radar': new Vector3(-1.5097, 5.2665, -0.0144)
     }
-    gsap.killTweensOf(glCamera)
     gsap.killTweensOf(glCamera.position)
     gsap.killTweensOf(glControls)
     gsap.to(glCamera.position, {
@@ -73,28 +72,27 @@ export default function UseTabsTarget() {
   { dependencies: [tabs] }
   )
   useGSAP(() => {
-    if (tabs === 'tunnel') {
-      if (touch) {
-        gsap.to(glCamera, {
-          fov: 75,
-          duration: 2,
-          ease: 'power2.out',
-          onUpdate: () => {
-            glCamera.updateProjectionMatrix()
-          }
-        })
-      } else {
-        gsap.to(glCamera, {
-          fov: 60,
-          duration: 2,
-          ease: 'power2.out',
-          onUpdate: () => {
-            glCamera.updateProjectionMatrix()
-          }
-        })
-      }
+    if (tabs !== 'tunnel') return
+    if (touch) {
+      gsap.to(glCamera, {
+        fov: 75,
+        duration: 2,
+        ease: 'power2.out',
+        onUpdate: () => {
+          glCamera.updateProjectionMatrix()
+        }
+      })
+    } else {
+      gsap.to(glCamera, {
+        fov: 60,
+        duration: 2,
+        ease: 'power2.out',
+        onUpdate: () => {
+          glCamera.updateProjectionMatrix()
+        }
+      })
     }
   },
-  { dependencies: [touch] }
+  { dependencies: [tabs, touch] }
   )
 }

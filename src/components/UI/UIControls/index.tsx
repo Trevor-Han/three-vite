@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, PointerEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { res, tabs } from './res'
 import { Tunnel, CarBody, WindDrag, Radar } from './text.tsx'
 import { GameWrapper } from './style'
@@ -41,10 +41,6 @@ export default function UIControls() {
     })
   }
 
-  const handlePointerEvent = (e: PointerEvent, flag: boolean) => {
-    useGameStore.setState({ touch: flag })
-  }
-
   useEffect(() => {
     useInteractStore.setState({ controlDom: controlRef.current! })
   }, [])
@@ -55,8 +51,6 @@ export default function UIControls() {
         <div
           className='control'
           ref={controlRef}
-          onPointerDown={(e) => handlePointerEvent(e, true)}
-          onPointerUp={(e) => handlePointerEvent(e, false)}
         ></div>
         <div className='container'>
           {res.map((item, index) => (

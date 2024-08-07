@@ -1,16 +1,8 @@
 import styled from 'styled-components'
 
 export const GameWrapper = styled.div`
-    width: 100%;
-    height: 100%;
-
-    .control{
-        width:100%;
-        height:100%
-    }
-
    .container{
-    position: absolute;
+    position: fixed;
     left:50%;
     transform:translate(-50%);
     bottom:80px;
@@ -18,6 +10,7 @@ export const GameWrapper = styled.div`
     border-radius: 30px;
     display: flex;
     align-items: center;
+    z-index: 9;
    }
 
    .color-item::after{
@@ -45,6 +38,7 @@ export const GameWrapper = styled.div`
         align-items: center;
         opacity: 1;
         transition: all 0.2s ease 0.3s;
+        z-index: 9;
     }
     .StateTable-content {
         position: relative;
@@ -118,6 +112,7 @@ export const GameWrapper = styled.div`
         width: 100%;
         margin-top: 5vmin;
         pointer-events: none;
+        z-index: 9;
         //opacity: 0;
     }
     .TopInfo-content{
