@@ -8,10 +8,18 @@ import { useGameStore, useInteractStore } from '@/utils/Store.ts'
 import World from '@/Elements/World.ts'
 import Loader from '@/utils/Loader.ts'
 import configResources from '@/config/resources.ts'
+import { Spin } from 'antd'
 
 const world = new World()
 const loader = new Loader()
 loader.load(configResources)
+
+function Loading() {
+  return <>
+    <div><Spin tip='Loading' size='small'/></div>
+  </>
+}
+
 function ThreeContainer() {
   const demand = useInteractStore((state) => state.demand)
   const progressDom = useInteractStore((state) => state.progressDom)
@@ -51,7 +59,7 @@ function ThreeContainer() {
         position: [-0.0908, 0.8, -3.9976]
       }}
     >
-      <Suspense fallback={null}>
+      <Suspense fallback={<Loading/>}>
         {model !== undefined && <Experience model={model}/>}
       </Suspense>
     </Canvas>

@@ -27,7 +27,8 @@ export default class World {
     const tunnelLoader = this.tunnel.build(model['tunnelLoader'])
     const windLine = this.windLine.build(model['windLine'])
     const cubeGround = model['cubeGround']
+    const roadLoader = model['roadLoader']
 
-    this.model = { carLoad, startRoom, tunnelLoader, cubeGround, windLine }
+    this.model = { carLoad, startRoom, tunnelLoader, cubeGround, windLine, roadLoader }
   }
 }

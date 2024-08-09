@@ -1,9 +1,17 @@
 import { Bloom, EffectComposer } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
-import { UnsignedByteType, NearestFilter, LinearFilter, Mesh, MeshStandardMaterial, ShaderMaterial, Color } from 'three'
+import {
+  UnsignedByteType,
+  NearestFilter,
+  LinearFilter,
+  Mesh,
+  MeshStandardMaterial,
+  ShaderMaterial,
+  Color
+} from 'three'
 import { OrbitControls, useCubeCamera } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { useReflect } from '@/utils/useReflect'
 import { flatModel, printModel } from '@/utils/misc.ts'
 import { useGSAP } from '@gsap/react'
@@ -17,10 +25,11 @@ import useLightMatTween from '@/Tween/useLightMatTween.ts'
 import useControl from '@/Tween/useControl.ts'
 import initUseRef from '@/config/InitUseRef.ts'
 import useWindTween from '@/Tween/useWindTween.ts'
+import { setRadarMesh } from '@/utils'
 
 function Experience(prop:any) {
   const { modelRef, params } = initUseRef()
-  const { carLoad, tunnelLoader, startRoom, cubeGround, windLine } = prop.model[0]
+  const { carLoad, tunnelLoader, startRoom, cubeGround, windLine, roadLoader } = prop.model[0]
 
   const carModel = flatModel(carLoad)
   const roomModel = flatModel(startRoom)
@@ -31,6 +40,7 @@ function Experience(prop:any) {
 
   const floor = roomModel[2] as Mesh
   const body = carModel[46] as Mesh
+  const radar = carModel[1] as Mesh
   const empennage = carModel[47]
   const tunnel = tunnelModel[1] as Mesh
   const light = roomModel[1] as Mesh
@@ -41,10 +51,12 @@ function Experience(prop:any) {
   const tunnelUniforms = tunnelMaterial.uniforms
   const bodyMat = body.material as THREE.MeshStandardMaterial
 
+  const { radarGroup } = setRadarMesh(radar as Mesh)
   const { fbo, camera } = useCubeCamera({ resolution: 1024 })
   const scene = useThree((state) => state.scene)
   const glCamera = useThree((state) => state.camera)
   const preColor = useGameStore((state) => state.preColor)
+  // const [radarMeshArray, setRadarMeshArray] = useState<Mesh[]>([])
 
   bodyMat.color = new Color(preColor)
   modelRef.current.bodyMat = body.material as THREE.MeshStandardMaterial
@@ -52,8 +64,17 @@ function Experience(prop:any) {
   modelRef.current.empennage = empennage
   modelRef.current.lightMat = light.material as MeshStandardMaterial
 
-  useTabsTarget()
+  fbo.texture.type = UnsignedByteType
+  fbo.texture.generateMipmaps = false
+  fbo.texture.minFilter = NearestFilter
+  fbo.texture.magFilter = NearestFilter
 
+  const { matrix, renderTarget } = useReflect(modelRef.current.floor!, {
+    resolution: [innerWidth, innerHeight],
+    ignoreObjects: [modelRef.current.floor!, tunnelLoader.scene, startRoom.scene]
+  })
+
+  useTabsTarget()
   useGSAP(() => {
     gsap.killTweensOf(glCamera)
     gsap.to(glCamera, {
@@ -73,17 +94,7 @@ function Experience(prop:any) {
   useTunnelTween({ params, modelRef, floorUniforms, tunnelUniforms })
   useWindTween({ windModel, carLoad })
 
-  fbo.texture.type = UnsignedByteType
-  fbo.texture.generateMipmaps = false
-  fbo.texture.minFilter = NearestFilter
-  fbo.texture.magFilter = NearestFilter
-
-  const { matrix, renderTarget } = useReflect(modelRef.current.floor!, {
-    resolution: [innerWidth, innerHeight],
-    ignoreObjects: [modelRef.current.floor!, tunnelLoader.scene, startRoom.scene]
-  })
-
-  useControl({ floorUniforms, tunnelUniforms, modelRef })
+  // useControl({ floorUniforms, tunnelUniforms, modelRef })
 
   useLayoutEffect(() => {
     handleModel()
@@ -158,6 +169,8 @@ function Experience(prop:any) {
     <primitive object={tunnelLoader?.scene}/>
     <primitive object={cubeGround?.scene}/>
     <primitive object={windLine?.scene}/>
+    {/* <primitive object={roadLoader?.scene}/>*/}
+    <primitive object={radarGroup}/>
 
     {/* <EffectComposer*/}
     {/*  frameBufferType={UnsignedByteType}*/}

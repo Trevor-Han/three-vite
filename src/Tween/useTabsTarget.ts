@@ -3,6 +3,8 @@ import { useGSAP } from '@gsap/react'
 import { Vector3 } from 'three'
 import gsap from 'gsap'
 import { useThree } from '@react-three/fiber'
+import { setObject3DVIS } from '@/utils'
+import { useEffect } from 'react'
 
 type glPositionType = {
     [key in glPositionKeyType]: Vector3;
@@ -13,6 +15,17 @@ export default function UseTabsTarget() {
   const glCamera = useThree((state) => state.camera)
   const glControls = useThree((state) => state.controls)
   const touch = useGameStore(state => state.touch)
+  const scene = useThree((state) => state.scene)
+
+  useEffect(() => {
+    if (tabs === 'radar') {
+      if (touch) {
+        setObject3DVIS(scene, 'radarGroup', true)
+      } else {
+        setObject3DVIS(scene, 'radarGroup', false)
+      }
+    }
+  }, [scene, tabs, touch])
 
   useGSAP(() => {
     if (!tabs) return
@@ -53,31 +66,15 @@ export default function UseTabsTarget() {
         }
       })
     }
-    if (touch) {
-      if (tabs === 'tunnel') {
-        gsap.to(glCamera, {
-          fov: 75,
-          duration: 2,
-          ease: 'power2.out'
-        })
-      } else {
-        gsap.to(glCamera, {
-          fov: 60,
-          duration: 2,
-          ease: 'power2.out'
-        })
-      }
-    }
   },
   { dependencies: [tabs] }
   )
   useGSAP(() => {
-    if (tabs !== 'tunnel') return
     if (touch) {
       gsap.to(glCamera, {
         fov: 75,
-        duration: 2,
-        ease: 'power2.out',
+        duration: 1,
+        ease: 'none',
         onUpdate: () => {
           glCamera.updateProjectionMatrix()
         }
@@ -85,14 +82,14 @@ export default function UseTabsTarget() {
     } else {
       gsap.to(glCamera, {
         fov: 60,
-        duration: 2,
-        ease: 'power2.out',
+        duration: 1,
+        ease: 'none',
         onUpdate: () => {
           glCamera.updateProjectionMatrix()
         }
       })
     }
   },
-  { dependencies: [tabs, touch] }
+  { dependencies: [touch] }
   )
 }

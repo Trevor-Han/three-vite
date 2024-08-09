@@ -1,4 +1,5 @@
 import { useControls } from 'leva'
+import {MeshBasicMaterial, MeshPhysicalMaterial} from 'three'
 
 export default function UseControl(config:any) {
   const { floorUniforms, tunnelUniforms, modelRef } = config
